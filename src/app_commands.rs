@@ -4,7 +4,6 @@ pub enum Command {
     AddDealer,
     ShowGoods,
     AddGood,
-    SaveData,
     Exit,
 }
 
@@ -26,7 +25,6 @@ impl Command {
             3 => Some(Command::AddDealer),
             4 => Some(Command::ShowGoods),
             5 => Some(Command::AddGood),
-            6 => Some(Command::SaveData),
             0 => Some(Command::Exit),
             _ => None,
         }
@@ -39,7 +37,6 @@ impl Command {
             "add dealer" => Some(Command::AddDealer),
             "show goods" => Some(Command::ShowGoods),
             "add good" => Some(Command::AddGood),
-            "save data" => Some(Command::SaveData),
             "exit" => Some(Command::Exit),
             _ => None,
         }
@@ -52,7 +49,6 @@ impl Command {
             Self::AddDealer => "add dealer",
             Self::ShowGoods => "show goods",
             Self::AddGood => "add good",
-            Self::SaveData => "save data",
             Self::Exit => "exit",
         }
     }
@@ -64,19 +60,17 @@ impl Command {
             Self::AddDealer => 3,
             Self::ShowGoods => 4,
             Self::AddGood => 5,
-            Self::SaveData => 6,
             Self::Exit => 0,
         }
     }
 
-    pub fn cmds() -> [Command; 7] {
-        const COMMANDS: [Command; 7] = [
+    pub fn cmds() -> [Command; 6] {
+        const COMMANDS: [Command; 6] = [
             Command::Help,
             Command::ShowDealers,
             Command::AddDealer,
             Command::ShowGoods,
             Command::AddGood,
-            Command::SaveData,
             Command::Exit,
         ];
         COMMANDS

@@ -1,7 +1,6 @@
 use super::app_commands::Command;
 use super::ask_input;
-use general_store_manager as gsm;
-use gsm::Store;
+use general_store_manager::Store;
 
 pub fn print_command_list() {
     println!("\nYou can choose one of the following commands: ");
@@ -11,8 +10,8 @@ pub fn print_command_list() {
     }
 }
 
-pub fn print_dealers(store: &gsm::Store) {
-    let mut dealers = gsm::get_dealers(store).peekable();
+pub fn print_dealers(store: &Store) {
+    let mut dealers = store.get_dealers().unwrap().into_iter().peekable();
 
     if dealers.peek().is_none() {
         println!("There are no dealers yet!");
@@ -29,11 +28,12 @@ pub fn add_dealer_after_input(store: &mut Store) {
     let name = ask_input(
         "Give a valid non-empty name (using alphabets and an _ for spaces) for the dealer!\n> ",
         |c, out| {
-            if !c.is_alphabetic() && c != '_' {
+            if !c.is_alphabetic() && c != '.' {
+                if c == ' ' {
+                    out.push('_');
+                    return true;
+                }
                 return false;
-            } else if c == ' ' {
-                out.push('_');
-                return true;
             }
             out.push(c);
             true
@@ -60,7 +60,7 @@ pub fn add_dealer_after_input(store: &mut Store) {
             }
         };
 
-        gsm::add_dealer(store, &name, &phone_num);
+        store.add_dealer(&name, &phone_num);
         println!("Added the dealer successfully!");
         break;
     }

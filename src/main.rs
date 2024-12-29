@@ -13,7 +13,7 @@ fn main() {
     println!("Welcome to our general store manager!");
     act::print_command_list();
     let mut store =
-        gsm::load_store_data_from(Path::new("store.txt")).expect("Failed to load store!");
+        gsm::load_store_data_from(Path::new("store.db")).expect("Failed to load store!");
 
     loop {
         let input_str = read_line("> ");
@@ -25,7 +25,6 @@ fn main() {
                 Command::AddDealer => act::add_dealer_after_input(&mut store),
                 Command::ShowGoods => todo!(),
                 Command::AddGood => todo!(),
-                Command::SaveData => todo!(),
                 Command::Exit => break,
             }
         } else {
