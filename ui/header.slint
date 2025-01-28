@@ -1,0 +1,90 @@
+component HamburgerMenu {
+  in property <int> size: 30;
+  in property <color> color: red;
+
+  property <int> unit: size / 30;
+  property <length> calculated_width: unit * 44px;
+  property <length> calculated_height: unit * 5.67px;
+
+  VerticalLayout {
+    spacing: unit * 7.5px;
+
+    Rectangle {
+      width: calculated_width;
+      height: calculated_height;
+      background: color;
+    }
+    Rectangle {
+      width: calculated_width;
+      height: calculated_height;
+      background: color;
+    }
+    Rectangle {
+      width: calculated_width;
+      height: calculated_height;
+      background: color;
+    }
+  }
+}
+
+import { Colors } from "colors.slint";
+import { H2Text, H5Text, H6Text } from "text.slint";
+import { DesignData } from "design_data.slint";
+
+export component Header {
+
+  in property<string> header_title: "Comparison Table";
+  in property<string> date_str: "16 January, 2025";
+  in property<string> time_str: "19:08";
+  
+  in property<DesignData> des_data;
+
+  property<length> win_width: 16px * des_data.win_scale;
+  property<length> col_width: (win_width - (2 * des_data.padding) - (11 * des_data.gutter)) / des_data.columns;
+
+  Rectangle {
+    clip: true;
+    background: Colors.d_gray;
+
+    HorizontalLayout {
+      padding-left: 40px;
+      padding-right: 40px;
+      padding-top: 8px;
+      padding-bottom: 8px;
+
+      alignment: LayoutAlignment.space-between;
+
+      HorizontalLayout {
+        Rectangle {
+          HorizontalLayout {
+            VerticalLayout {
+              alignment: LayoutAlignment.space-around;
+              HamburgerMenu {
+                size: 30;
+                color: Colors.l_gray;
+              }
+            }
+          }
+          height: 0.6px * des_data.win_scale;
+          width: col_width + des_data.gutter;
+        }
+
+        H2Text {
+          in_text: header_title;
+          in_color: Colors.l_gray;
+        }
+      }
+
+      VerticalLayout {
+        H5Text {
+          in_text: date_str;
+          in_color: Colors.l_gray;
+        }
+        H6Text {
+          in_text: time_str;
+          in_color: Colors.l_gray;
+        }
+      }
+    }
+  }
+}

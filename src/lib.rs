@@ -6,8 +6,8 @@ use std::path::Path;
 
 #[derive(PartialEq, Debug)]
 pub struct Dealer {
-    name: String,
-    phone_num: PhoneNumber,
+    pub name: String,
+    pub phone_num: PhoneNumber,
 }
 
 impl Display for Dealer {
@@ -39,7 +39,8 @@ impl Store {
 
     pub fn get_dealers(&self) -> Result<Vec<Dealer>, Error> {
         self.connection
-            .prepare("SELECT (name, phone_num) FROM dealers")
+            .prepare("SELECT name, phone_num FROM dealers")
+            .map_err(|e| eprintln!("SQLite Error: {:?}", e))
             .unwrap()
             .query_map((), |row| {
                 let name = row.get(0).unwrap();

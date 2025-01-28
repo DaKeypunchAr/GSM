@@ -1,0 +1,53 @@
+import { Colors } from "colors.slint";
+import { H4Text, ParagraphText } from "text.slint";
+import { RadioButton, RadioLabel } from "utils.slint";
+import { DesignData } from "design_data.slint";
+
+export component SideBar {
+  in property<DesignData> des_data;
+
+  property<length> win_width: 16px * des_data.win_scale;
+  property<length> win_height: 9px * des_data.win_scale;
+  property<length> col_width: (win_width - (2 * des_data.padding) - (11 * des_data.gutter)) / des_data.columns;
+
+  VerticalLayout {
+    Rectangle {
+      background: Colors.m_gray;
+      width: col_width * 2 + des_data.gutter + des_data.padding;
+      height: win_height - (0.6px * des_data.win_scale);
+
+      VerticalLayout {
+        spacing: 8px;
+        padding-left: des_data.padding;
+        padding-right: des_data.padding;
+
+        property<length> vertical_padding: 0.2px * des_data.win_scale;
+        padding-top: vertical_padding;
+        padding-bottom: vertical_padding;
+
+        alignment: LayoutAlignment.start;
+
+
+        H4Text {
+          in_text: "Sorting Method:";
+          in_color: Colors.vd_gray;
+        }
+
+        RadioLabel {
+          label: "Low to High";
+          in_tag: "Sorting Method";
+          in_color_selected: Colors.vd_gray;
+          in_color_unselected: Colors.d_gray;
+          in_selected: true;
+        }
+
+        RadioLabel {
+          label: "High to Low";
+          in_tag: "Sorting Method";
+          in_color_selected: Colors.vd_gray;
+          in_color_unselected: Colors.d_gray;
+        }
+      }
+    }
+  }
+}

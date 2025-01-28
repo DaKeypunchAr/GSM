@@ -1,70 +1,33 @@
-use std::io::{self, Write};
-use std::path::Path;
+use general_store_manager::load_store_data_from;
+use slint::{SharedString, ToSharedString};
+use std::env;
 
-pub mod app_commands;
-use app_commands::Command;
-
-pub mod app_actions;
-use app_actions as act;
-
-use general_store_manager as gsm;
+slint::include_modules!();
 
 fn main() {
-    println!("Welcome to our general store manager!");
-    act::print_command_list();
-    let mut store =
-        gsm::load_store_data_from(Path::new("store.db")).expect("Failed to load store!");
+    let app = MainWindow::new().unwrap();
 
-    loop {
-        let input_str = read_line("> ");
+    let mut cwd = env::current_dir().unwrap();
+    cwd.push("store.db");
+    let path = cwd.as_path();
+    let store = load_store_data_from(path).expect("Failed to make store!");
 
-        if let Some(cmd) = Command::build(&input_str) {
-            match cmd {
-                Command::Help => act::print_command_list(),
-                Command::ShowDealers => act::print_dealers(&store),
-                Command::AddDealer => act::add_dealer_after_input(&mut store),
-                Command::ShowGoods => todo!(),
-                Command::AddGood => todo!(),
-                Command::Exit => break,
-            }
-        } else {
-            continue;
-        }
+    let dealers = store
+        .get_dealers()
+        .expect("Failed to get dealers from store!");
+
+    let mut dealer_rows: Vec<DealerRowData> = Vec::new();
+
+    for dealer in dealers {
+        dealer_rows.push(DealerRowData {
+            name: SharedString::from(dealer.name),
+            phone_num: dealer.phone_num.to_shared_string(),
+            price: 100,
+        });
     }
-    println!("Thanks for using!");
-}
 
-fn read_line(question: &str) -> String {
-    print!("{question}");
-    io::stdout().flush().expect("Failed to flush stdout!");
+    let model = std::rc::Rc::new(slint::VecModel::from(dealer_rows));
+    app.set_dealer_data(model.clone().into());
 
-    let mut input_str = String::new();
-    io::stdin()
-        .read_line(&mut input_str)
-        .expect("Failed to read line!");
-
-    input_str
-}
-
-pub fn ask_input<F>(question: &str, evaluate_char: F) -> String
-where
-    F: Fn(char, &mut String) -> bool,
-{
-    loop {
-        let input = read_line(question);
-
-        if input.is_empty() {
-            continue;
-        }
-
-        let input = input.trim();
-        let mut output_text = String::new();
-
-        for ch in input.chars() {
-            if !evaluate_char(ch, &mut output_text) {
-                continue;
-            }
-        }
-        return output_text;
-    }
+    app.run().unwrap();
 }

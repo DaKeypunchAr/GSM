@@ -1,0 +1,40 @@
+import { Header } from "header.slint";
+import { SideBar } from "sidebar.slint";
+import { Colors } from "colors.slint";
+import { ComparisonTable, DealerRowData } from "comparison.slint";
+import { H1Text } from "text.slint";
+import { DesignData } from "design_data.slint";
+
+export component MainWindow inherits Window {
+  property<DesignData> design_data: {
+    win-scale: 100,
+    padding: 40px,
+    gutter: 16px,
+    columns: 12
+  };
+
+  width: 16px * self.design_data.win_scale;
+  height: 9px * self.design_data.win_scale;
+  background: Colors.vd_gray;
+
+  in property<[DealerRowData]> dealer_data;
+
+  VerticalLayout {
+    alignment: start;
+    Header {
+      des_data: design_data;
+    }
+
+    HorizontalLayout {
+      SideBar {
+        des_data: design_data;
+      }
+
+      ComparisonTable {
+        des_data: design_data;
+
+        dealer_rows: design_data;
+      }
+    }
+  }
+}

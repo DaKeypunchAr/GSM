@@ -1,0 +1,93 @@
+import { H1Text, H2Text, ParagraphText } from "text.slint";
+import { Colors } from "colors.slint";
+import { DesignData } from "design_data.slint";
+
+export struct DealerRowData {
+  name: string,
+  phone_num: string,
+  price: int,
+}
+
+component DealerRow {
+  in property<DealerRowData> data;
+  in property<bool> first: false;
+  in property<bool> last: false;
+
+  Rectangle {
+    background: Colors.m_gray;
+    border-bottom-left-radius: last ? 10px : 0px;
+    border-bottom-right-radius: last ? 10px : 0px;
+    border-top-left-radius: first ? 10px : 0px;
+    border-top-right-radius: first ? 10px : 0px;
+    border-width: 2px;
+    border-color: Colors.vl_gray;
+
+    VerticalLayout {
+      alignment: LayoutAlignment.center;
+      padding-top: 8px;
+      padding-bottom: 8px;
+      HorizontalLayout {
+        alignment: LayoutAlignment.space_between;
+        padding-left: 20px;
+        padding-right: 20px;
+        VerticalLayout {
+          HorizontalLayout {
+            alignment: LayoutAlignment.start;
+            H2Text {
+              in_text: data.name;
+              in_color: Colors.vd_gray;
+            }
+          }
+          HorizontalLayout {
+            ParagraphText {
+              in_text: "Phone Num: " + data.phone_num;
+              in_color: Colors.vd_gray;
+            }
+          }
+        }
+        H1Text {
+          in_text: "₹" + data.price + "/-";
+          in_color: Colors.vd_gray;
+        }
+      }
+    }
+  }
+}
+
+export component ComparisonTable {
+  in property<DesignData> des_data;
+
+  property<length> win_width: 16px * des_data.win_scale;
+  property<length> col_width: (win_width - (2 * des_data.padding) - (11 * des_data.gutter)) / des_data.columns;
+
+  in property<[DealerRowData]> dealer_rows;
+
+  HorizontalLayout {
+    alignment: LayoutAlignment.center;
+
+    VerticalLayout {
+      alignment: LayoutAlignment.center;
+      spacing: 24px;
+      Rectangle {
+        background: Colors.l_gray;
+        border-radius: 10px;
+
+        width: col_width * 6 + des_data.gutter * 5;
+        height: 9 * 8px;
+
+        H1Text {
+          in_text: "Fortune Refined Soyabean Oil";
+          in_color: Colors.vd_gray;
+        }
+      }
+
+      VerticalLayout {
+        for rowdata[i] in dealer_rows: DealerRow {
+          data: rowdata;
+          first: i == 0;
+          last: i == dealer_rows.length - 1;
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,57 @@
+import { ParagraphText } from "text.slint";
+import { Colors } from "colors.slint";
+export component RadioButton {
+  in-out property<bool> selected: false;
+  in-out property<string> tag: "Undefined";
+  in-out property<color> color_selected: #000;
+  in-out property<color> color_unselected: #cccccc;
+
+  in-out property<int> size: 30;
+
+  Rectangle {
+    background: transparent;
+    border-color: selected ? color_selected : color_unselected;
+    width: size * 1px;
+    height: size * 1px;
+    border-width: 1px;
+    border-radius: size * 0.5px;
+
+    HorizontalLayout {
+      alignment: LayoutAlignment.center;
+      VerticalLayout {
+        alignment: LayoutAlignment.center;
+        Rectangle {
+          background: selected ? color_selected : transparent;
+          width: size * 0.5px;
+          height: size * 0.5px;
+          border-radius: size * 0.25px;
+        }
+      }
+    }
+  }
+}
+
+export component RadioLabel {
+  in-out property<string> label: "Unknown Label";
+  in-out property<string> in_tag: "Unknown tag";
+  in-out property<color> in_color_selected;
+  in-out property<color> in_color_unselected;
+  in-out property<bool> in_selected: false;
+  in-out property<int> button_size: 15;
+
+  HorizontalLayout {
+    alignment: LayoutAlignment.space-between;
+    ParagraphText {
+      in_text: label;
+      in_color: Colors.vd_gray;
+    }
+
+    RadioButton {
+      tag: in_tag;
+      selected: in_selected;
+      color-selected: in_color_selected;
+      color-unselected: in_color_unselected;
+      size: button_size;
+    }
+  }
+}
