@@ -1,0 +1,255 @@
+import { DesignData } from "design_data.slint";
+import { Colors } from "colors.slint";
+import { SearchBar, IconButton, LineEdit, InputLabel, Button, Layover } from "utils.slint";
+import { ProductData } from "data_structures.slint";
+import { Text, TextStyle } from "text.slint";
+
+component Result {
+  in property<ProductData> product;
+  in property<bool> last;
+
+  Rectangle {
+    VerticalLayout {
+      spacing: 15px;
+
+      HorizontalLayout {
+        alignment: LayoutAlignment.start;
+        padding-left: 32px;
+        padding-right: 32px;
+        spacing: 40px;
+
+        Rectangle {
+          width: 100px;
+          height: 100px;
+          border-radius: 50px;
+          background: Colors.l_gray;
+
+          Image {
+            source: product.image;
+          }
+        }
+
+        VerticalLayout {
+          alignment: LayoutAlignment.center;
+          spacing: 4px;
+
+          HorizontalLayout {
+            alignment: LayoutAlignment.start;
+            spacing: 32px;
+
+            Text {
+              in_text: product.brand_name;
+              in_color: Colors.vl_gray;
+              style: TextStyle.H3;
+            }
+
+            Text {
+              in_text: "(" + product.product_name + ")";
+              in_color: Colors.vl_gray;
+              style: TextStyle.H6;
+            }
+          }
+
+          HorizontalLayout {
+            alignment: LayoutAlignment.start;
+            spacing: 32px;
+
+            Text {
+              in_text: product.pack_size + " Pack";
+              in_color: Colors.vl_gray;
+              style: TextStyle.Paragraph;
+            }
+          }
+        }
+      }
+
+      if !last : Rectangle {
+        height: 2px;
+        background: Colors.l_gray;
+      }
+    }
+  }
+}
+
+component ProductListLayout {
+  in property<DesignData> des_data;
+  in property<bool> sidebar_activated;
+  in property<[ProductData]> results;
+
+  in-out property<bool> add_product: false;
+
+  property<length> win_width: 16px * des_data.win_scale;
+  property<length> win_height: 9px * des_data.win_scale;
+  property<length> col_width: (win_width - (2 * des_data.padding) - (11 * des_data.gutter)) / des_data.columns;
+
+  VerticalLayout {
+    alignment: LayoutAlignment.start;
+    padding-top: 32px;
+    padding-left: col_width + des_data.gutter;
+    padding-right: col_width + des_data.gutter;
+    spacing: 40px;
+
+    HorizontalLayout {
+      alignment: LayoutAlignment.center;
+      spacing: 16px;
+
+      SearchBar {
+        des_data: des_data;
+        default_text: "Search products";
+        calc_width: sidebar_activated ? (col_width * 8 + des_data.gutter * 7 - 88px) : (col_width * 10 + des_data.gutter * 9 - 88px);
+      }
+
+      IconButton {
+        icon: @image-url("../res/PlusCircle.png");
+        bg_color: Colors.vl_gray;
+        color: Colors.m_gray;
+        bg_width: 72px;
+        bg_height: 72px;
+
+        clicked => {
+          add_product = true;
+        }
+      }
+    }
+
+    VerticalLayout {
+      spacing: 15px;
+      for result[i] in results : Result {
+        product: result;
+        last: i == results.length - 1;
+      }
+    }
+  }
+}
+
+component ProductAddDialogLayout {
+  callback cancel <=> cancel.clicked;
+  callback add <=> add.clicked;
+  in property<DesignData> des_data;
+
+  VerticalLayout {
+    alignment: LayoutAlignment.center;
+
+    HorizontalLayout {
+      alignment: LayoutAlignment.center;
+      Rectangle {
+        border-radius: 10px;
+        background: Colors.l_gray;
+
+        content := VerticalLayout {
+          padding: 16px;
+          spacing: 12px;
+
+          HorizontalLayout {
+            alignment: LayoutAlignment.center;
+            padding-bottom: 16px;
+            Text {
+              in_text: "Add Products";
+              in_color: Colors.vd_gray;
+              style: TextStyle.H3;
+            }
+          }
+
+          InputLabel {
+            color: Colors.d_gray;
+            placeholder_text: "";
+            des_data: des_data;
+            calc_width: 300px;
+            text_style: TextStyle.Paragraph;
+            text_color: Colors.l_gray;
+
+            label_name: "Brand name";
+            label_color: Colors.vd_gray;
+            label_style: TextStyle.H6;
+          }
+
+          InputLabel {
+            color: Colors.d_gray;
+            placeholder_text: "";
+            des_data: des_data;
+            calc_width: 300px;
+            text_style: TextStyle.Paragraph;
+            text_color: Colors.l_gray;
+
+            label_name: "Product name";
+            label_color: Colors.vd_gray;
+            label_style: TextStyle.H6;
+          }
+
+          InputLabel {
+            color: Colors.d_gray;
+            placeholder_text: "";
+            des_data: des_data;
+            calc_width: 300px;
+            text_style: TextStyle.Paragraph;
+            text_color: Colors.l_gray;
+
+            label_name: "Pack Size";
+            label_color: Colors.vd_gray;
+            label_style: TextStyle.H6;
+          }
+
+          HorizontalLayout {
+            padding: 12px;
+            alignment: LayoutAlignment.space_around;
+
+            add := Button {
+              name: "Add Product";
+              color: Colors.l_gray;
+              bg_color: Colors.d_gray;
+              text_style: TextStyle.Paragraph;
+            }
+
+            cancel := Button {
+              name: "Cancel";
+              color: Colors.l_gray;
+              bg_color: Colors.d_gray;
+              text_style: TextStyle.Paragraph;
+            }
+          }
+        }
+
+        width: content.preferred_width;
+        height: content.preferred_height;
+      }
+    }
+  }
+}
+
+export component ProductPageLayout {
+  in property<DesignData> des_data;
+  in property<bool> sidebar_activated;
+  in property<[ProductData]> results;
+
+  property<length> win_width: 16px * des_data.win_scale;
+  property<length> win_height: 9px * des_data.win_scale;
+  property<length> col_width: (win_width - (2 * des_data.padding) - (11 * des_data.gutter)) / des_data.columns;
+
+  VerticalLayout {
+    alignment: LayoutAlignment.start;
+    Rectangle {
+      height: win_height - (0.6px * des_data.win_scale);
+      VerticalLayout {
+        alignment: LayoutAlignment.start;
+        layout := ProductListLayout {
+          des_data: des_data;
+          sidebar_activated: sidebar_activated;
+          results: results;
+        }
+      }
+
+      if layout.add_product : Layover {
+        width: parent.width;
+        height: parent.height;
+
+        ProductAddDialogLayout {
+          des_data: des_data;
+
+          cancel => {
+            layout.add_product = false;
+          }
+        }
+      }
+    }
+  }
+}

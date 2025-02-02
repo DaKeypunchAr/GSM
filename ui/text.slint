@@ -1,88 +1,28 @@
-export component H1Text {
-  in property<string> in_text: "text is missing";
-  in property<color> in_color: white;
-
-  Text {
-    text: in_text;
-    color: in_color;
-    font-family: "Space Grotesk";
-    font_size: 2.98625rem;
-  }
+export enum TextStyle {
+    H1, H2, H3, H4, H5, H6, Paragraph, Caption
 }
-export component H2Text {
-  in property<string> in_text: "text is missing";
-  in property<color> in_color: white;
 
-  Text {
-    text: in_text;
-    color: in_color;
-    font-family: "Space Grotesk";
-    font_size: 2.488rem;
-  }
-}
-export component H3Text {
-  in property<string> in_text: "text is missing";
-  in property<color> in_color: white;
+export component Text {
+    in property<string> in_text: "text is missing";
+    in property<color> in_color: white;
+    in property<TextStyle> style: TextStyle.Paragraph;
 
-  Text {
-    text: in_text;
-    color: in_color;
-    font-family: "Space Grotesk";
-    font_size: 2.074rem;
-  }
-}
-export component H4Text {
-  in property<string> in_text: "text is missing";
-  in property<color> in_color: white;
+    property<length> font_size: {
+      if (style == TextStyle.H1) { 2.98625rem }
+      else if (style == TextStyle.H2) { 2.488rem }
+      else if (style == TextStyle.H3) { 2.074rem }
+      else if (style == TextStyle.H4) { 1.728rem }
+      else if (style == TextStyle.H5) { 1.44rem }
+      else if (style == TextStyle.H6) { 1.2rem }
+      else if (style == TextStyle.Paragraph) { 1rem }
+      else if (style == TextStyle.Caption) { 0.833rem }
+      else { 1rem } // Default value
+    };
 
-  Text {
-    text: in_text;
-    color: in_color;
-    font-family: "Space Grotesk";
-    font_size: 1.728rem;
-  }
-}
-export component H5Text {
-  in property<string> in_text: "text is missing";
-  in property<color> in_color: white;
-
-  Text {
-    text: in_text;
-    color: in_color;
-    font-family: "Space Grotesk";
-    font_size: 1.44rem;
-  }
-}
-export component H6Text {
-  in property<string> in_text: "text is missing";
-  in property<color> in_color: white;
-
-  Text {
-    text: in_text;
-    color: in_color;
-    font-family: "Space Grotesk";
-    font_size: 1.2rem;
-  }
-}
-export component ParagraphText {
-  in property<string> in_text: "text is missing";
-  in property<color> in_color: white;
-
-  Text {
-    text: in_text;
-    color: in_color;
-    font-family: "Space Grotesk";
-    font_size: 1rem;
-  }
-}
-export component CaptionText {
-  in property<string> in_text: "text is missing";
-  in property<color> in_color: white;
-
-  Text {
-    text: in_text;
-    color: in_color;
-    font-family: "Space Grotesk";
-    font_size: 0.833rem;
-  }
+    Text {
+        text: in_text;
+        color: in_color;
+        font-family: "Space Grotesk";
+        font_size: root.font_size;
+    }
 }

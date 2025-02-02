@@ -1,0 +1,232 @@
+import { DesignData } from "design_data.slint";
+import { Colors } from "colors.slint";
+import { SearchBar, IconButton, Layover, InputLabel, Button } from "utils.slint";
+import { DealerData } from "data_structures.slint";
+import { Text, TextStyle } from "text.slint";
+
+component Result {
+  in property<DealerData> dealer;
+  in property<bool> last;
+
+  Rectangle {
+    VerticalLayout {
+      spacing: 15px;
+
+      HorizontalLayout {
+        alignment: LayoutAlignment.start;
+        padding-left: 32px;
+        padding-right: 32px;
+        spacing: 40px;
+
+        Rectangle {
+          width: 100px;
+          height: 100px;
+          border-radius: 50px;
+          background: Colors.l_gray;
+
+          Image {
+            source: dealer.image;
+          }
+        }
+
+        VerticalLayout {
+          alignment: LayoutAlignment.center;
+          spacing: 4px;
+
+          HorizontalLayout {
+            alignment: LayoutAlignment.start;
+            Text {
+              in_text: dealer.name;
+              in_color: Colors.vl_gray;
+              style: TextStyle.H3;
+            }
+          }
+
+          HorizontalLayout {
+            alignment: LayoutAlignment.start;
+            Text {
+              in_text: "Mobile No: " + dealer.phone_num;
+              in_color: Colors.vl_gray;
+              style: TextStyle.Paragraph;
+            }
+          }
+        }
+      }
+
+      if !last : Rectangle {
+        height: 2px;
+        background: Colors.l_gray;
+      }
+    }
+  }
+}
+
+component DealerListLayout {
+  in property<DesignData> des_data;
+  in property<bool> sidebar_activated;
+  in property<[DealerData]> results;
+
+  in-out property<bool> add_dealer: false;
+
+  property<length> win_width: 16px * des_data.win_scale;
+  property<length> win_height: 9px * des_data.win_scale;
+  property<length> col_width: (win_width - (2 * des_data.padding) - (11 * des_data.gutter)) / des_data.columns;
+
+  VerticalLayout {
+    alignment: LayoutAlignment.start;
+    padding-top: 32px;
+    padding-left: col_width + des_data.gutter;
+    padding-right: col_width + des_data.gutter;
+    spacing: 40px;
+
+    HorizontalLayout {
+      alignment: LayoutAlignment.center;
+      spacing: 16px;
+
+      SearchBar {
+        des_data: des_data;
+        default_text: "Search dealers";
+        calc_width: sidebar_activated ? (col_width * 8 + des_data.gutter * 7 - 88px) : (col_width * 10 + des_data.gutter * 9 - 88px);
+      }
+
+      IconButton {
+        icon: @image-url("../res/PlusCircle.png");
+        bg_color: Colors.vl_gray;
+        color: Colors.m_gray;
+        bg_width: 72px;
+        bg_height: 72px;
+
+        clicked => {
+          add_dealer = true;
+        }
+      }
+    }
+
+    VerticalLayout {
+      spacing: 15px;
+      for result[i] in results : Result {
+        dealer: result;
+        last: i == results.length - 1;
+      }
+    }
+  }
+}
+
+component DealerAddDialogLayout {
+  callback cancel <=> cancel.clicked;
+  callback add <=> add.clicked;
+  in property<DesignData> des_data;
+
+  VerticalLayout {
+    alignment: LayoutAlignment.center;
+
+    HorizontalLayout {
+      alignment: LayoutAlignment.center;
+      Rectangle {
+        border-radius: 10px;
+        background: Colors.l_gray;
+
+        content := VerticalLayout {
+          padding: 16px;
+          spacing: 12px;
+
+          HorizontalLayout {
+            alignment: LayoutAlignment.center;
+            padding-bottom: 16px;
+            Text {
+              in_text: "Add Dealers";
+              in_color: Colors.vd_gray;
+              style: TextStyle.H3;
+            }
+          }
+
+          InputLabel {
+            color: Colors.d_gray;
+            placeholder_text: "";
+            des_data: des_data;
+            calc_width: 300px;
+            text_style: TextStyle.Paragraph;
+            text_color: Colors.l_gray;
+
+            label_name: "Name";
+            label_color: Colors.vd_gray;
+            label_style: TextStyle.H6;
+          }
+
+          InputLabel {
+            color: Colors.d_gray;
+            placeholder_text: "";
+            des_data: des_data;
+            calc_width: 300px;
+            text_style: TextStyle.Paragraph;
+            text_color: Colors.l_gray;
+
+            label_name: "Phone Number";
+            label_color: Colors.vd_gray;
+            label_style: TextStyle.H6;
+          }
+
+          HorizontalLayout {
+            padding: 12px;
+            alignment: LayoutAlignment.space_around;
+
+            add := Button {
+              name: "Add Dealer";
+              color: Colors.l_gray;
+              bg_color: Colors.d_gray;
+              text_style: TextStyle.Paragraph;
+            }
+
+            cancel := Button {
+              name: "Cancel";
+              color: Colors.l_gray;
+              bg_color: Colors.d_gray;
+              text_style: TextStyle.Paragraph;
+            }
+          }
+        }
+
+        width: content.preferred_width;
+        height: content.preferred_height;
+      }
+    }
+  }
+}
+
+export component DealerPageLayout {
+  in property<DesignData> des_data;
+  in property<bool> sidebar_activated;
+  in property<[DealerData]> results;
+
+  property<length> win_width: 16px * des_data.win_scale;
+  property<length> win_height: 9px * des_data.win_scale;
+  property<length> col_width: (win_width - (2 * des_data.padding) - (11 * des_data.gutter)) / des_data.columns;
+
+  VerticalLayout {
+    alignment: LayoutAlignment.start;
+    Rectangle {
+      height: win_height - (0.6px * des_data.win_scale);
+      VerticalLayout {
+        alignment: LayoutAlignment.start;
+        layout := DealerListLayout {
+          des_data: des_data;
+          sidebar_activated: sidebar_activated;
+          results: results;
+        }
+      }
+
+      if layout.add_dealer : Layover {
+        width: parent.width;
+        height: parent.height;
+
+        DealerAddDialogLayout {
+          des_data: des_data;
+
+          cancel => {
+            layout.add_dealer = false;
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,9 +1,14 @@
+// Data Structures
+import { DesignData } from "design_data.slint";
+import { Colors } from "colors.slint";
+import { DealerData, ProductData, ProductDealersConnection } from "data_structures.slint";
+
+// Layout Abstractions
 import { Header } from "header.slint";
 import { SideBar } from "sidebar.slint";
-import { Colors } from "colors.slint";
-import { ComparisonTable, DealerRowData } from "comparison.slint";
-import { H1Text } from "text.slint";
-import { DesignData } from "design_data.slint";
+import { ComparisonLayout } from "comparison.slint";
+import { ProductPageLayout } from "product_page.slint";
+import { DealerPageLayout } from "dealer_page.slint";
 
 export component MainWindow inherits Window {
   property<DesignData> design_data: {
@@ -17,23 +22,57 @@ export component MainWindow inherits Window {
   height: 9px * self.design_data.win_scale;
   background: Colors.vd_gray;
 
-  in property<[DealerRowData]> dealer_data;
+  in property<bool> product_selected: false;
+  in property<ProductDealersConnection> conns;
+  in property<[ProductData]> best_results;
+  in property<[ProductData]> recent_results;
+  in property<[ProductData]> product_results;
+  in property<[DealerData]> dealer_results;
+  in-out property<bool> sidebar_activated: true;
+  in-out property<int> selected_page: 0;
+
+  property<[string]> pages: [
+    "Comparison Table",
+    "Products",
+    "Dealers",
+  ];
 
   VerticalLayout {
     alignment: start;
     Header {
+      header_title: pages[selected_page];
       des_data: design_data;
+      onHamburgerMenu => {
+        sidebar_activated = !sidebar_activated;
+      }
     }
 
     HorizontalLayout {
-      SideBar {
+      if sidebar_activated : SideBar {
         des_data: design_data;
+        pages: pages;
+        selected_page: selected_page;
+        clicked(idx) => {
+          selected_page = idx;
+        }
       }
 
-      ComparisonTable {
+      if selected_page == 0 : ComparisonLayout {
         des_data: design_data;
-
-        dealer_rows: design_data;
+        product_selected: product_selected;
+        conns: conns;
+        best_results: best_results;
+        recent_results: recent_results;
+      }
+      if selected_page == 1 : ProductPageLayout {
+        des_data: design_data;
+        sidebar_activated: sidebar_activated;
+        results: product_results;
+      }
+      if selected_page == 2 : DealerPageLayout {
+        des_data: design_data;
+        sidebar_activated: sidebar_activated;
+        results: dealer_results;
       }
     }
   }

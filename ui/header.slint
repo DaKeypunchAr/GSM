@@ -1,25 +1,22 @@
+import { Colors } from "colors.slint";
+import { Text, TextStyle } from "text.slint";
+import { DesignData } from "design_data.slint";
+
 component HamburgerMenu {
+  callback clicked <=> area.clicked;
   in property <int> size: 30;
-  in property <color> color: red;
+  in property <color> color;
 
   property <int> unit: size / 30;
   property <length> calculated_width: unit * 44px;
   property <length> calculated_height: unit * 5.67px;
 
+  area := TouchArea {}
+
   VerticalLayout {
     spacing: unit * 7.5px;
 
-    Rectangle {
-      width: calculated_width;
-      height: calculated_height;
-      background: color;
-    }
-    Rectangle {
-      width: calculated_width;
-      height: calculated_height;
-      background: color;
-    }
-    Rectangle {
+    for i in 3 : Rectangle {
       width: calculated_width;
       height: calculated_height;
       background: color;
@@ -27,12 +24,9 @@ component HamburgerMenu {
   }
 }
 
-import { Colors } from "colors.slint";
-import { H2Text, H5Text, H6Text } from "text.slint";
-import { DesignData } from "design_data.slint";
-
 export component Header {
-
+  callback onHamburgerMenu <=> hamburger.clicked;
+  
   in property<string> header_title: "Comparison Table";
   in property<string> date_str: "16 January, 2025";
   in property<string> time_str: "19:08";
@@ -43,12 +37,11 @@ export component Header {
   property<length> col_width: (win_width - (2 * des_data.padding) - (11 * des_data.gutter)) / des_data.columns;
 
   Rectangle {
-    clip: true;
     background: Colors.d_gray;
 
     HorizontalLayout {
-      padding-left: 40px;
-      padding-right: 40px;
+      padding-left: des_data.padding;
+      padding-right: des_data.padding;
       padding-top: 8px;
       padding-bottom: 8px;
 
@@ -56,33 +49,37 @@ export component Header {
 
       HorizontalLayout {
         Rectangle {
-          HorizontalLayout {
-            VerticalLayout {
-              alignment: LayoutAlignment.space-around;
-              HamburgerMenu {
+          VerticalLayout {
+            alignment: LayoutAlignment.space-around;
+            Rectangle {
+              width: hamburger.width;
+              height: hamburger.height;
+              hamburger := HamburgerMenu {
                 size: 30;
                 color: Colors.l_gray;
               }
             }
           }
-          height: 0.6px * des_data.win_scale;
           width: col_width + des_data.gutter;
         }
 
-        H2Text {
+        Text {
           in_text: header_title;
           in_color: Colors.l_gray;
+          style: TextStyle.H2;
         }
       }
 
       VerticalLayout {
-        H5Text {
+        Text {
           in_text: date_str;
           in_color: Colors.l_gray;
+          style: TextStyle.H5;
         }
-        H6Text {
+        Text {
           in_text: time_str;
           in_color: Colors.l_gray;
+          style: TextStyle.H6;
         }
       }
     }
