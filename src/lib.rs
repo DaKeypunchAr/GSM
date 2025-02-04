@@ -22,19 +22,45 @@ pub struct Store {
 }
 
 impl Store {
-    fn build(path: &Path) -> Result<Store, Error> {
+    pub fn build(path: &Path, new: bool) -> Result<Self> {
         let connection = Connection::open(path)?;
 
-        connection.execute(
-            "CREATE TABLE IF NOT EXISTS dealers (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL,
-                phone_num TEXT NOT NULL
-            )",
-            (),
-        )?;
+        if new {
+            connection.execute_batch(
+                "CREATE TABLE IF NOT EXISTS categories (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL,
+                    parent_id INTEGER,
+                    FOREIGN KEY (parent_id) REFERENCES categories(id)
+                );
 
-        Ok(Store { connection })
+                CREATE TABLE IF NOT EXISTS products (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL,
+                    description TEXT,
+                    category_id INTEGER,
+                    FOREIGN KEY (category_id) REFERENCES categories(id)
+                );
+
+                CREATE TABLE IF NOT EXISTS dealers (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL,
+                    phone_num TEXT NOT NULL
+                );
+
+                CREATE TABLE IF NOT EXISTS product_prices (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    product_id INTEGER NOT NULL,
+                    dealer_id INTEGER NOT NULL,
+                    price REAL NOT NULL,
+                    date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (product_id) REFERENCES products(id),
+                    FOREIGN KEY (dealer_id) REFERENCES dealers(id)
+                );",
+            )?;
+        }
+
+        Ok(Self { connection })
     }
 
     pub fn get_dealers(&self) -> Result<Vec<Dealer>, Error> {
@@ -71,13 +97,13 @@ impl Store {
 
 pub fn load_store_data_from(path: &Path) -> Result<Store> {
     if fs::exists(path).expect("Unable to check if {path} exist!") {
-        return Store::build(path);
+        return Store::build(path, false);
     }
 
     if fs::exists(path.parent().expect("Failed to know the parent of a path"))
         .expect("Unable to check parent of path!")
     {
-        return Store::build(path);
+        return Store::build(path, true);
     }
 
     if let Err(e) = fs::create_dir_all(path.parent().expect("Unable to know the parent of {path}!"))
@@ -90,7 +116,7 @@ pub fn load_store_data_from(path: &Path) -> Result<Store> {
         );
     }
 
-    Store::build(path)
+    Store::build(path, true)
 }
 
 #[cfg(test)]

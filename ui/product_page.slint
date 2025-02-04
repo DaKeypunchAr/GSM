@@ -1,7 +1,7 @@
 import { DesignData } from "design_data.slint";
 import { Colors } from "colors.slint";
 import { SearchBar, IconButton, LineEdit, InputLabel, Button, Layover } from "utils.slint";
-import { ProductData } from "data_structures.slint";
+import { ProductData, ProductSearchInput, Mode } from "data_structures.slint";
 import { Text, TextStyle } from "text.slint";
 
 component Result {
@@ -74,49 +74,59 @@ component Result {
 component ProductListLayout {
   in property<DesignData> des_data;
   in property<bool> sidebar_activated;
-  in property<[ProductData]> results;
-
-  in-out property<bool> add_product: false;
 
   property<length> win_width: 16px * des_data.win_scale;
   property<length> win_height: 9px * des_data.win_scale;
   property<length> col_width: (win_width - (2 * des_data.padding) - (11 * des_data.gutter)) / des_data.columns;
+  
+  in property<ProductSearchInput> product_search_input;
 
-  VerticalLayout {
-    alignment: LayoutAlignment.start;
-    padding-top: 32px;
-    padding-left: col_width + des_data.gutter;
-    padding-right: col_width + des_data.gutter;
-    spacing: 40px;
+  // Callbacks
+  callback add_product_mode();
 
-    HorizontalLayout {
-      alignment: LayoutAlignment.center;
-      spacing: 16px;
+  public function remove_focus() {
+    search_bar.remove_focus();
+  }
 
-      SearchBar {
-        des_data: des_data;
-        default_text: "Search products";
-        calc_width: sidebar_activated ? (col_width * 8 + des_data.gutter * 7 - 88px) : (col_width * 10 + des_data.gutter * 9 - 88px);
-      }
+  Rectangle {
+    content := VerticalLayout {
+      alignment: LayoutAlignment.start;
+      padding-top: 32px;
+      padding-left: col_width + des_data.gutter;
+      padding-right: col_width + des_data.gutter;
+      spacing: 40px;
 
-      IconButton {
-        icon: @image-url("../res/PlusCircle.png");
-        bg_color: Colors.vl_gray;
-        color: Colors.m_gray;
-        bg_width: 72px;
-        bg_height: 72px;
 
-        clicked => {
-          add_product = true;
+      HorizontalLayout {
+        alignment: LayoutAlignment.center;
+        spacing: 16px;
+
+        search_bar := SearchBar {
+          des_data: des_data;
+          default_text: "Search products";
+          calc_width: sidebar_activated ? (col_width * 8 + des_data.gutter * 7 - 88px) : (col_width * 10 + des_data.gutter * 9 - 88px);
+        }
+
+        IconButton {
+          icon: @image-url("../res/PlusCircle.png");
+          bg_color: Colors.vl_gray;
+          color: Colors.m_gray;
+          bg_width: 72px;
+          bg_height: 72px;
+
+          clicked => {
+            add_product_mode();
+            search_bar.remove_focus();
+          }
         }
       }
-    }
 
-    VerticalLayout {
-      spacing: 15px;
-      for result[i] in results : Result {
-        product: result;
-        last: i == results.length - 1;
+      VerticalLayout {
+        spacing: 15px;
+        for result[i] in product_search_input.results : Result {
+          product: result;
+          last: i == product_search_input.results.length - 1;
+        }
       }
     }
   }
@@ -126,6 +136,12 @@ component ProductAddDialogLayout {
   callback cancel <=> cancel.clicked;
   callback add <=> add.clicked;
   in property<DesignData> des_data;
+
+  public function remove_focus() {
+    labels_remove_focus = !labels_remove_focus;
+  }
+  
+  property<bool> labels_remove_focus: true;
 
   VerticalLayout {
     alignment: LayoutAlignment.center;
@@ -150,7 +166,11 @@ component ProductAddDialogLayout {
             }
           }
 
-          InputLabel {
+          property<[string]> fields: [
+            "Brand name", "Product Name", "Pack Size"
+          ];
+
+          for field in fields : labels := InputLabel {
             color: Colors.d_gray;
             placeholder_text: "";
             des_data: des_data;
@@ -158,35 +178,10 @@ component ProductAddDialogLayout {
             text_style: TextStyle.Paragraph;
             text_color: Colors.l_gray;
 
-            label_name: "Brand name";
+            label_name: field;
             label_color: Colors.vd_gray;
             label_style: TextStyle.H6;
-          }
-
-          InputLabel {
-            color: Colors.d_gray;
-            placeholder_text: "";
-            des_data: des_data;
-            calc_width: 300px;
-            text_style: TextStyle.Paragraph;
-            text_color: Colors.l_gray;
-
-            label_name: "Product name";
-            label_color: Colors.vd_gray;
-            label_style: TextStyle.H6;
-          }
-
-          InputLabel {
-            color: Colors.d_gray;
-            placeholder_text: "";
-            des_data: des_data;
-            calc_width: 300px;
-            text_style: TextStyle.Paragraph;
-            text_color: Colors.l_gray;
-
-            label_name: "Pack Size";
-            label_color: Colors.vd_gray;
-            label_style: TextStyle.H6;
+            remove_label_focus: labels_remove_focus;
           }
 
           HorizontalLayout {
@@ -219,34 +214,57 @@ component ProductAddDialogLayout {
 export component ProductPageLayout {
   in property<DesignData> des_data;
   in property<bool> sidebar_activated;
-  in property<[ProductData]> results;
 
   property<length> win_width: 16px * des_data.win_scale;
   property<length> win_height: 9px * des_data.win_scale;
   property<length> col_width: (win_width - (2 * des_data.padding) - (11 * des_data.gutter)) / des_data.columns;
 
+  in property<ProductSearchInput> product_search_input;
+  in property<Mode> mode;
+
+  // Callbacks
+  callback add_product_mode <=> layout.add_product_mode;
+  callback cancel_add_product_mode();
+  callback add_the_product();
+
   VerticalLayout {
     alignment: LayoutAlignment.start;
     Rectangle {
       height: win_height - (0.6px * des_data.win_scale);
+      width: win_width - (col_width * 2 + des_data.gutter + des_data.padding);
+
+      TouchArea {
+        clicked => {
+          layout.remove_focus();
+        }
+      }
       VerticalLayout {
         alignment: LayoutAlignment.start;
         layout := ProductListLayout {
           des_data: des_data;
           sidebar_activated: sidebar_activated;
-          results: results;
+          product_search_input: product_search_input;
         }
       }
 
-      if layout.add_product : Layover {
+      if mode == Mode.ProductAdd : layover := Layover {
         width: parent.width;
         height: parent.height;
 
-        ProductAddDialogLayout {
+        TouchArea {
+          clicked => {
+            add_dialog.remove_focus();
+          }
+        }
+
+        add_dialog := ProductAddDialogLayout {
           des_data: des_data;
 
           cancel => {
-            layout.add_product = false;
+            cancel_add_product_mode();
+          }
+          add => {
+            add_the_product();
           }
         }
       }

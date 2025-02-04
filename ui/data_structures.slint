@@ -25,3 +25,31 @@ export struct ProductDealersConnection {
   product: ProductData,
   dealer_price_pairs: [DealerPricePair],
 }
+
+export struct ComparisonProductSelectionInput {
+  best_results: [ProductData],
+  recent_results: [ProductData],
+}
+
+export struct ComparisonTableInput {
+  product_dealers_connection: ProductDealersConnection,
+}
+
+export struct ProductSearchInput {
+  search_text: string,
+  results: [ProductData],
+}
+
+export struct DealerSearchInput {
+  search_text: string,
+  results: [DealerData],
+}
+
+export enum Mode {
+  ComparisonProductSelection,
+  ComparisonTable,
+  ProductSearch,
+  ProductAdd,
+  DealerSearch,
+  DealerAdd,
+}

@@ -2,7 +2,7 @@ import { Text, TextStyle } from "text.slint";
 import { Colors } from "colors.slint";
 import { DesignData } from "design_data.slint";
 import { SearchBar } from "utils.slint";
-import { DealerData, ProductData, DealerPricePair, ProductDealersConnection } from "data_structures.slint";
+import { DealerData, ProductData, DealerPricePair, ProductDealersConnection, ComparisonProductSelectionInput, ComparisonTableInput, Mode } from "data_structures.slint";
 
 component DealerRow {
   in property<DealerPricePair> dealer_price_pair;
@@ -112,10 +112,17 @@ component ProductDetails {
 
 component ComparisonTable {
   in property<DesignData> des_data;
-  in property<ProductDealersConnection> conns;
   property<length> win_width: 16px * des_data.win_scale;
   property<length> win_height: 9px * des_data.win_scale;
   property<length> col_width: (win_width - (2 * des_data.padding) - (11 * des_data.gutter)) / des_data.columns;
+
+  in property<ComparisonTableInput> table_input;
+
+  in property<bool> remove_focus_toggle;
+
+  changed remove_focus_toggle => {
+
+  }
 
   Rectangle {
     height: win_height - (0.6px * des_data.win_scale);
@@ -132,17 +139,17 @@ component ComparisonTable {
         height: 9 * 8px;
 
         Text {
-          in_text: conns.product.brand_name;
+          in_text: table_input.product_dealers_connection.product.brand_name;
           in_color: Colors.vd_gray;
           style: TextStyle.H1;
         }
       }
 
       VerticalLayout {
-        for pair[i] in conns.dealer_price_pairs: DealerRow {
+        for pair[i] in table_input.product_dealers_connection.dealer_price_pairs: DealerRow {
           dealer_price_pair: pair;
           first: i == 0;
-          last: i == conns.dealer_price_pairs.length - 1;
+          last: i == table_input.product_dealers_connection.dealer_price_pairs.length - 1;
         }
       }
     }
@@ -151,22 +158,28 @@ component ComparisonTable {
 
 component ProductSearch {
   in property<DesignData> des_data;
-  in property<[ProductData]> best_results;
-  in property<[ProductData]> recent_results;
   property<length> win_width: 16px * des_data.win_scale;
   property<length> win_height: 9px * des_data.win_scale;
   property<length> col_width: (win_width - (2 * des_data.padding) - (11 * des_data.gutter)) / des_data.columns;
 
+  in property<ComparisonProductSelectionInput> product_selection_input;
+
+  in property<bool> remove_focus_toggle;
+
+  changed remove_focus_toggle => {
+    search_bar.remove_focus();
+  }
+
   VerticalLayout {
     spacing: 24px;
 
-    SearchBar {
+    search_bar := SearchBar {
       color: Colors.m_gray;
       default_text: "Search product name";
       des_data: des_data;
     }
 
-    if best_results.length != 0 || recent_results.length != 0 : Rectangle {
+    if product_selection_input.best_results.length != 0 || product_selection_input.recent_results.length != 0 : Rectangle {
       width: col_width * 6 + des_data.gutter * 5;
       background: Colors.vl_gray;
       border-radius: 10px;
@@ -174,10 +187,10 @@ component ProductSearch {
       // for height calculations
       VerticalLayout {
         ProductDetails {
-          input: best_results;
+          input: product_selection_input.best_results;
         }
 
-        if recent_results.length != 0 : VerticalLayout {
+        if product_selection_input.recent_results.length != 0 : VerticalLayout {
           HorizontalLayout {
             alignment: LayoutAlignment.start;
             padding-left: 24px;
@@ -192,7 +205,7 @@ component ProductSearch {
           }
 
           ProductDetails {
-            input: recent_results;
+            input: product_selection_input.recent_results;
           }
         }
       }
@@ -207,25 +220,36 @@ export component ComparisonLayout {
   property<length> win_height: 9px * des_data.win_scale;
   property<length> col_width: (win_width - (2 * des_data.padding) - (11 * des_data.gutter)) / des_data.columns;
 
-  in property<ProductDealersConnection> conns;
-  in property<bool> product_selected: true;
+  in property<ComparisonProductSelectionInput> product_selection_input;
+  in property<ComparisonTableInput> table_input;
+  in property<Mode> mode;
 
-  in-out property<string> search_text;
-  in property<[ProductData]> best_results;
-  in property<[ProductData]> recent_results;
+  // Callbacks
+  callback product_selected();
+
+  property<bool> remove_focus_toggle: false;
 
   VerticalLayout {
     Rectangle {
       height: win_height - (0.6px * des_data.win_scale);
-      if product_selected : ComparisonTable {
-        des_data: des_data;
-        conns: conns;
+      width: win_width - (col_width * 2 + des_data.gutter + des_data.padding);
+
+      TouchArea {
+        clicked => {
+          remove_focus_toggle = !remove_focus_toggle;
+        }
       }
 
-      if !product_selected : ProductSearch {
+      if mode == Mode.ComparisonProductSelection : ProductSearch {
         des_data: des_data;
-        best_results: best_results;
-        recent_results: recent_results;
+        product_selection_input: product_selection_input;
+        remove_focus_toggle: remove_focus_toggle;
+      }
+
+      if mode == Mode.ComparisonTable : ComparisonTable {
+        des_data: des_data;
+        table_input: table_input;
+        remove_focus_toggle: remove_focus_toggle;
       }
     }
   }

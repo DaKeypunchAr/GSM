@@ -80,6 +80,10 @@ export component SearchBar {
     }
   }
 
+  public function remove_focus() {
+    input.clear_focus();
+  }
+
   Rectangle {
     HorizontalLayout {
       Rectangle {
@@ -111,7 +115,7 @@ export component SearchBar {
             spacing: 32px;
             alignment: LayoutAlignment.start;
 
-            if !input.has_focus : Text {
+            if !input.has_focus && input.text == "" : Text {
               in_text: default_text;
               in_color: color;
               style: TextStyle.H3;
@@ -186,6 +190,10 @@ export component LineEdit {
     }
   }
 
+  public function remove_focus() {
+    input.clear_focus();
+  }
+
   property<bool> user_edited: false;
 
   property<length> win_width: 16px * des_data.win_scale;
@@ -241,6 +249,15 @@ export component InputLabel {
   in property<color> label_color;
   in property<TextStyle> label_style;
 
+  public function remove_focus() {
+    edit.remove_focus();
+  }
+
+  in-out property<bool> remove_label_focus: false;
+  changed remove_label_focus => {
+    remove_focus();
+  }
+
   HorizontalLayout {
     alignment: LayoutAlignment.space_between;
     spacing: 12px;
@@ -251,7 +268,7 @@ export component InputLabel {
       style: label_style;
     }
 
-    LineEdit {
+    edit := LineEdit {
       color: color;
       placeholder_text: placeholder_text;
       des_data: des_data;
