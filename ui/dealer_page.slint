@@ -36,7 +36,7 @@ component Result {
           HorizontalLayout {
             alignment: LayoutAlignment.start;
             Text {
-              in_text: dealer.name;
+              in_text: dealer.first_name + " " + dealer.middle_name + " " + dealer.last_name;
               in_color: Colors.vl_gray;
               style: TextStyle.H3;
             }
@@ -73,6 +73,7 @@ component DealerListLayout {
 
   // Callbacks
   callback dealer_add_mode();
+  callback search_text_changed(string);
 
   public function remove_focus() {
     search_bar.remove_focus();
@@ -89,10 +90,18 @@ component DealerListLayout {
       alignment: LayoutAlignment.center;
       spacing: 16px;
 
-      search_bar := SearchBar {
-        des_data: des_data;
-        default_text: "Search dealers";
-        calc_width: sidebar_activated ? (col_width * 8 + des_data.gutter * 7 - 88px) : (col_width * 10 + des_data.gutter * 9 - 88px);
+      Rectangle { // for some bug cz of which this thing took a freaking more height than it should!
+        width: search_bar.preferred_width;
+        height: search_bar.preferred_height;
+        search_bar := SearchBar {
+          des_data: des_data;
+          default_text: "Search dealers";
+          calc_width: sidebar_activated ? (col_width * 8 + des_data.gutter * 7 - 88px) : (col_width * 10 + des_data.gutter * 9 - 88px);
+
+          search_text_changed(new_text) => {
+            root.search_text_changed(new_text);
+          }
+        }
       }
 
       IconButton {
@@ -120,7 +129,7 @@ component DealerListLayout {
 
 component DealerAddDialogLayout {
   callback cancel <=> cancel.clicked;
-  callback add <=> add.clicked;
+  callback add(DealerData);
   in property<DesignData> des_data;
 
   property<bool> labels_remove_focus: false;
@@ -152,10 +161,12 @@ component DealerAddDialogLayout {
           }
 
           property<[string]> fields: [
-            "Name", "Phone Number"
+            "First name", "Middle name", "Last name", "Phone Number"
           ];
 
-          for field in fields : labels := InputLabel {
+          property<[string]> output_strings: ["", "", "", ""];
+
+          for field[i] in fields : labels := InputLabel {
             color: Colors.d_gray;
             placeholder_text: "";
             des_data: des_data;
@@ -167,6 +178,10 @@ component DealerAddDialogLayout {
             label_color: Colors.vd_gray;
             label_style: TextStyle.H6;
             remove_label_focus: labels_remove_focus;
+
+            text_updated(new_text) => {
+              output_strings[i] = new_text;
+            }
           }
 
           HorizontalLayout {
@@ -178,6 +193,16 @@ component DealerAddDialogLayout {
               color: Colors.l_gray;
               bg_color: Colors.d_gray;
               text_style: TextStyle.Paragraph;
+
+              clicked => {
+                root.add({
+                  first_name: output_strings[0], 
+                  middle_name: output_strings[1],
+                  last_name: output_strings[2],
+                  phone_num: output_strings[3],
+                  country_code: "+91"
+                });
+              }
             }
 
             cancel := Button {
@@ -210,7 +235,8 @@ export component DealerPageLayout {
   // Callback
   callback dealer_add_mode <=> layout.dealer_add_mode;
   callback cancel_dealer_add_mode();
-  callback add_the_dealer();
+  callback add_the_dealer(DealerData);
+  callback search_text_changed(string);
 
   VerticalLayout {
     alignment: LayoutAlignment.start;
@@ -230,6 +256,10 @@ export component DealerPageLayout {
           des_data: des_data;
           sidebar_activated: sidebar_activated;
           dealer_search_input: dealer_search_input;
+
+          search_text_changed(new_text) => {
+            root.search_text_changed(new_text);
+          }
         }
       }
 
@@ -249,8 +279,8 @@ export component DealerPageLayout {
           cancel => {
             cancel_dealer_add_mode();
           }
-          add => {
-            add_the_dealer();
+          add(data) => {
+            add_the_dealer(data);
           }
         }
       }

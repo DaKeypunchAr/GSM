@@ -84,6 +84,8 @@ export component SearchBar {
     input.clear_focus();
   }
 
+  callback search_text_changed(string);
+
   Rectangle {
     HorizontalLayout {
       Rectangle {
@@ -131,6 +133,7 @@ export component SearchBar {
               edited => {
                 user_edited = true;
                 text = input.text;
+                root.search_text_changed(text);
               }
             }
           }
@@ -211,6 +214,8 @@ export component LineEdit {
     else { 1rem } // Default value
   };
 
+  callback text_updated(string);
+
   HorizontalLayout {
     Rectangle {
       width: calc_width;
@@ -230,6 +235,7 @@ export component LineEdit {
           edited => {
             user_edited = true;
             text = input.text;
+            text_updated(text);
           }
         }
       }
@@ -258,6 +264,8 @@ export component InputLabel {
     remove_focus();
   }
 
+  callback text_updated(string);
+
   HorizontalLayout {
     alignment: LayoutAlignment.space_between;
     spacing: 12px;
@@ -275,6 +283,10 @@ export component InputLabel {
       calc_width: calc_width;
       text_style: text_style;
       text_color: text_color;
+
+      text_updated(new_text) => {
+        root.text_updated(new_text);
+      }
     }
   }
 }

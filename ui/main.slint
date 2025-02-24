@@ -10,7 +10,7 @@ import { ComparisonLayout } from "comparison.slint";
 import { ProductPageLayout } from "product_page.slint";
 import { DealerPageLayout } from "dealer_page.slint";
 
-struct Data {
+export struct Data {
   comparison_product_selection_input: ComparisonProductSelectionInput,
   comparison_table_input: ComparisonTableInput,
   product_search_input: ProductSearchInput,
@@ -44,13 +44,15 @@ export component MainWindow inherits Window {
   in-out property<int> selected_page: 0;
   in-out property<bool> sidebar_activated: true;
 
-  in-out property<Mode> mode;
+  in-out property<Mode> mode: Mode.ComparisonProductSelection;
   in property<Data> input_data;
 
   // Callbacks
-  callback mode_changed();
-  callback add_product();
-  callback add_dealer();
+  callback mode_changed(Mode);
+  callback search_text_changed(string, Mode);
+  callback add_product(ProductData);
+  callback add_dealer(DealerData);
+  callback product_selected(ProductData);
 
   VerticalLayout {
     alignment: start;
@@ -70,7 +72,7 @@ export component MainWindow inherits Window {
         clicked(idx) => {
           selected_page = idx;
           mode = pages_initial_mode[idx];
-          mode_changed();
+          mode_changed(mode);
         }
       }
 
@@ -80,9 +82,13 @@ export component MainWindow inherits Window {
         table_input: input_data.comparison_table_input;
         mode: mode;
 
-        product_selected => {
+        product_selected(pr) => {
           mode = Mode.ComparisonTable;
-          mode_changed();
+          mode_changed(mode);
+          product_selected(pr);
+        }
+        search_text_changed(new_text) => {
+          root.search_text_changed(new_text, mode);
         }
       }
       if selected_page == 1 : ProductPageLayout {
@@ -93,16 +99,19 @@ export component MainWindow inherits Window {
 
         add_product_mode => {
           mode = Mode.ProductAdd;
-          mode_changed();
+          mode_changed(mode);
         }
         cancel_add_product_mode => {
           mode = Mode.ProductSearch;
-          mode_changed();
+          mode_changed(mode);
         }
-        add_the_product => {
-          add_product();
+        add_the_product(data) => {
+          add_product(data);
           mode = Mode.ProductSearch;
-          mode_changed();
+          mode_changed(mode);
+        }
+        search_text_changed(new_text) => {
+          root.search_text_changed(new_text, mode);
         }
       }
       if selected_page == 2 : DealerPageLayout {
@@ -113,16 +122,19 @@ export component MainWindow inherits Window {
 
         dealer_add_mode => {
           mode = Mode.DealerAdd;
-          mode_changed();
+          mode_changed(mode);
         }
         cancel_dealer_add_mode => {
           mode = Mode.DealerSearch;
-          mode_changed();
+          mode_changed(mode);
         }
-        add_the_dealer => {
-          add_dealer();
+        add_the_dealer(data) => {
+          add_dealer(data);
           mode = Mode.DealerSearch;
-          mode_changed();
+          mode_changed(mode);
+        }
+        search_text_changed(new_text) => {
+          root.search_text_changed(new_text, mode);
         }
       }
     }

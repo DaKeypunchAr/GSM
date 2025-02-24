@@ -34,7 +34,7 @@ component DealerRow {
           HorizontalLayout {
             alignment: LayoutAlignment.start;
             Text {
-              in_text: dealer_price_pair.dealer.name;
+              in_text: dealer_price_pair.dealer.first_name + " " + dealer_price_pair.dealer.middle_name + " " + dealer_price_pair.dealer.last_name;
               in_color: Colors.vd_gray;
               style: TextStyle.H2;
             }
@@ -61,9 +61,16 @@ component DealerRow {
 }
 
 component ProductDetails {
+  callback product_selected(ProductData);
+
   in property<[ProductData]> input;
   VerticalLayout {
     for pr[i] in input : Rectangle {
+      TouchArea {
+        clicked => {
+          product_selected(pr);
+        }
+      }
       VerticalLayout {
         alignment: LayoutAlignment.start;
         padding-left: 24px;
@@ -88,14 +95,14 @@ component ProductDetails {
             }
 
             Text {
-              in_text: pr.brand_name;
+              in_text: pr.brand_name + " " + pr.product_name;
               in_color: Colors.d_gray;
               style: TextStyle.H4;
             }
           }
 
           Text {
-            in_text: pr.pack_size;
+            in_text: pr.pack_name;
             in_color: Colors.d_gray;
             style: TextStyle.H5;
           }
@@ -139,7 +146,7 @@ component ComparisonTable {
         height: 9 * 8px;
 
         Text {
-          in_text: table_input.product_dealers_connection.product.brand_name;
+          in_text: table_input.product_dealers_connection.product.brand_name + " " + table_input.product_dealers_connection.product.product_name;
           in_color: Colors.vd_gray;
           style: TextStyle.H1;
         }
@@ -170,13 +177,24 @@ component ProductSearch {
     search_bar.remove_focus();
   }
 
+  callback search_text_changed(string);
+  callback product_selected(ProductData);
+
   VerticalLayout {
     spacing: 24px;
 
-    search_bar := SearchBar {
-      color: Colors.m_gray;
-      default_text: "Search product name";
-      des_data: des_data;
+    Rectangle {
+      width: search_bar.preferred-width;
+      height: search_bar.preferred-height;
+      search_bar := SearchBar {
+        color: Colors.m_gray;
+        default_text: "Search product name";
+        des_data: des_data;
+
+        search_text_changed(new_text) => {
+          root.search_text_changed(new_text);
+        }
+      }
     }
 
     if product_selection_input.best_results.length != 0 || product_selection_input.recent_results.length != 0 : Rectangle {
@@ -188,6 +206,9 @@ component ProductSearch {
       VerticalLayout {
         ProductDetails {
           input: product_selection_input.best_results;
+          product_selected(pr) => {
+            root.product_selected(pr);
+          }
         }
 
         if product_selection_input.recent_results.length != 0 : VerticalLayout {
@@ -206,6 +227,9 @@ component ProductSearch {
 
           ProductDetails {
             input: product_selection_input.recent_results;
+            product_selected(pr) => {
+              root.product_selected(pr);
+            }
           }
         }
       }
@@ -225,10 +249,10 @@ export component ComparisonLayout {
   in property<Mode> mode;
 
   // Callbacks
-  callback product_selected();
+  callback product_selected(ProductData);
+  callback search_text_changed(string);
 
   property<bool> remove_focus_toggle: false;
-
   VerticalLayout {
     Rectangle {
       height: win_height - (0.6px * des_data.win_scale);
@@ -244,6 +268,13 @@ export component ComparisonLayout {
         des_data: des_data;
         product_selection_input: product_selection_input;
         remove_focus_toggle: remove_focus_toggle;
+
+        search_text_changed(new_text) => {
+          root.search_text_changed(new_text);
+        }
+        product_selected(pr) => {
+          root.product_selected(pr);
+        }
       }
 
       if mode == Mode.ComparisonTable : ComparisonTable {

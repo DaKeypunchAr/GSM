@@ -11,6 +11,7 @@ rustflags = ["-C", "link-arg=--ld-path=/usr/bin/mold"]
 phonenumber = "0.3.6"
 rusqlite = "0.32.1"
 slint = "1.9.1"
+levenshtein = "1.0.5"
 
 [build-dependencies]
 slint-build = "1.9.0"

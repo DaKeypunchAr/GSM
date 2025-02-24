@@ -38,13 +38,13 @@ component Result {
             spacing: 32px;
 
             Text {
-              in_text: product.brand_name;
+              in_text: product.brand_name + " " + product.product_name;
               in_color: Colors.vl_gray;
               style: TextStyle.H3;
             }
 
             Text {
-              in_text: "(" + product.product_name + ")";
+              in_text: "(" + product.item_name + ")";
               in_color: Colors.vl_gray;
               style: TextStyle.H6;
             }
@@ -55,7 +55,7 @@ component Result {
             spacing: 32px;
 
             Text {
-              in_text: product.pack_size + " Pack";
+              in_text: product.pack_name + " Pack";
               in_color: Colors.vl_gray;
               style: TextStyle.Paragraph;
             }
@@ -83,6 +83,7 @@ component ProductListLayout {
 
   // Callbacks
   callback add_product_mode();
+  callback search_text_changed(string);
 
   public function remove_focus() {
     search_bar.remove_focus();
@@ -101,10 +102,18 @@ component ProductListLayout {
         alignment: LayoutAlignment.center;
         spacing: 16px;
 
-        search_bar := SearchBar {
-          des_data: des_data;
-          default_text: "Search products";
-          calc_width: sidebar_activated ? (col_width * 8 + des_data.gutter * 7 - 88px) : (col_width * 10 + des_data.gutter * 9 - 88px);
+        Rectangle { // for some bug cz of which this thing took a freaking more height than it should!
+          width: search_bar.preferred_width;
+          height: search_bar.preferred_height;
+          search_bar := SearchBar {
+            des_data: des_data;
+            default_text: "Search products";
+            calc_width: sidebar_activated ? (col_width * 8 + des_data.gutter * 7 - 88px) : (col_width * 10 + des_data.gutter * 9 - 88px);
+
+            search_text_changed(new_text) => {
+              root.search_text_changed(new_text);
+            }
+          }
         }
 
         IconButton {
@@ -125,7 +134,7 @@ component ProductListLayout {
         spacing: 15px;
         for result[i] in product_search_input.results : Result {
           product: result;
-          last: i == product_search_input.results.length - 1;
+          last: i >= product_search_input.results.length - 1;
         }
       }
     }
@@ -134,7 +143,7 @@ component ProductListLayout {
 
 component ProductAddDialogLayout {
   callback cancel <=> cancel.clicked;
-  callback add <=> add.clicked;
+  callback add(ProductData);
   in property<DesignData> des_data;
 
   public function remove_focus() {
@@ -167,10 +176,12 @@ component ProductAddDialogLayout {
           }
 
           property<[string]> fields: [
-            "Brand name", "Product Name", "Pack Size"
+            "Brand name", "Item Name", "Product Name", "Pack Name"
           ];
 
-          for field in fields : labels := InputLabel {
+          property<[string]> output_strings: ["", "", "", ""];
+
+          for field[i] in fields : labels := InputLabel {
             color: Colors.d_gray;
             placeholder_text: "";
             des_data: des_data;
@@ -182,6 +193,10 @@ component ProductAddDialogLayout {
             label_color: Colors.vd_gray;
             label_style: TextStyle.H6;
             remove_label_focus: labels_remove_focus;
+
+            text_updated(new_text) => {
+              output_strings[i] = new_text;
+            }
           }
 
           HorizontalLayout {
@@ -193,6 +208,15 @@ component ProductAddDialogLayout {
               color: Colors.l_gray;
               bg_color: Colors.d_gray;
               text_style: TextStyle.Paragraph;
+
+              clicked => {
+                root.add({
+                  brand_name: output_strings[0],
+                  item_name: output_strings[1],
+                  product_name: output_strings[2], 
+                  pack_name: output_strings[3]
+                });
+              }
             }
 
             cancel := Button {
@@ -225,7 +249,8 @@ export component ProductPageLayout {
   // Callbacks
   callback add_product_mode <=> layout.add_product_mode;
   callback cancel_add_product_mode();
-  callback add_the_product();
+  callback add_the_product(ProductData);
+  callback search_text_changed(string);
 
   VerticalLayout {
     alignment: LayoutAlignment.start;
@@ -244,6 +269,10 @@ export component ProductPageLayout {
           des_data: des_data;
           sidebar_activated: sidebar_activated;
           product_search_input: product_search_input;
+
+          search_text_changed(new_text) => {
+            root.search_text_changed(new_text);
+          }
         }
       }
 
@@ -263,8 +292,8 @@ export component ProductPageLayout {
           cancel => {
             cancel_add_product_mode();
           }
-          add => {
-            add_the_product();
+          add(data) => {
+            add_the_product(data);
           }
         }
       }

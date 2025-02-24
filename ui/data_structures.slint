@@ -1,5 +1,8 @@
 export struct DealerData {
-  name: string,
+  first_name: string,
+  middle_name: string,
+  last_name: string,
+  country_code: string,
   phone_num: string,
   image: image,
 }
@@ -7,7 +10,8 @@ export struct DealerData {
 export struct ProductData {
   brand_name: string,
   product_name: string,
-  pack_size: string,
+  item_name: string,
+  pack_name: string,
   image: image,
 }
 
@@ -36,12 +40,10 @@ export struct ComparisonTableInput {
 }
 
 export struct ProductSearchInput {
-  search_text: string,
   results: [ProductData],
 }
 
 export struct DealerSearchInput {
-  search_text: string,
   results: [DealerData],
 }
 
