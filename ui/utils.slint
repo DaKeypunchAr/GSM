@@ -1,6 +1,7 @@
 import { Text, TextStyle } from "text.slint";
 import { Colors } from "colors.slint";
 import { DesignData } from "design_data.slint";
+import { ProductData, ProductSelectionInput } from "data_structures.slint";
 
 export component RadioButton {
   in-out property<bool> selected: false;
@@ -183,21 +184,15 @@ export component LineEdit {
   in property<TextStyle> text_style: TextStyle.H6;
 
   in property<length> calc_width;
-  in-out property<string> text: input.text;
-
-  changed text => {
-    if user_edited {
-      user_edited = false;
-    } else {
-      input.text = text;
-    }
-  }
+  out property<string> text: input.text;
 
   public function remove_focus() {
     input.clear_focus();
   }
 
-  property<bool> user_edited: false;
+  public function change_text(string: string) {
+    input.text = string;
+  }
 
   property<length> win_width: 16px * des_data.win_scale;
   property<length> col_width: (win_width - (2 * des_data.padding) - (11 * des_data.gutter)) / des_data.columns;
@@ -233,7 +228,6 @@ export component LineEdit {
           font-family: "Space Grotesk";
           font-size: root.font-size;
           edited => {
-            user_edited = true;
             text = input.text;
             text_updated(text);
           }
@@ -255,8 +249,14 @@ export component InputLabel {
   in property<color> label_color;
   in property<TextStyle> label_style;
 
+  out property<string> text: edit.text;
+
   public function remove_focus() {
     edit.remove_focus();
+  }
+
+  public function change_text(text: string) {
+    edit.change_text(text);
   }
 
   in-out property<bool> remove_label_focus: false;
@@ -330,5 +330,136 @@ export component Layover {
     area := TouchArea {}
 
     @children
+  }
+}
+
+component ProductDetails {
+  callback product_selected(ProductData);
+
+  in property<[ProductData]> input;
+  VerticalLayout {
+    for pr[i] in input : Rectangle {
+      TouchArea {
+        clicked => {
+          product_selected(pr);
+        }
+      }
+      VerticalLayout {
+        alignment: LayoutAlignment.start;
+        padding-left: 24px;
+        padding-right: 24px;
+
+        HorizontalLayout {
+          alignment: LayoutAlignment.space_between;
+          padding-top: 16px;
+          padding-bottom: 16px;
+          HorizontalLayout {
+            spacing: 24px;
+            Rectangle {
+              width: 48px;
+              height: self.width;
+              border-radius: self.width / 2;
+              clip: true;
+              background: Colors.m_gray;
+
+              Image {
+                  source: pr.image;
+              }
+            }
+
+            Text {
+              in_text: pr.brand_name + " " + pr.product_name;
+              in_color: Colors.d_gray;
+              style: TextStyle.H4;
+            }
+          }
+
+          Text {
+            in_text: pr.pack_name;
+            in_color: Colors.d_gray;
+            style: TextStyle.H5;
+          }
+        }
+
+        if i != input.length - 1 : Rectangle {
+          height: 2px;
+          background: Colors.m_gray;
+        }
+      }
+    }
+  }
+}
+
+export component ProductSearch {
+  in property<DesignData> des_data;
+  property<length> win_width: 16px * des_data.win_scale;
+  property<length> win_height: 9px * des_data.win_scale;
+  property<length> col_width: (win_width - (2 * des_data.padding) - (11 * des_data.gutter)) / des_data.columns;
+
+  in property<ProductSelectionInput> product_selection_input;
+
+  in property<bool> remove_focus_toggle;
+
+  changed remove_focus_toggle => {
+    search_bar.remove_focus();
+  }
+
+  callback search_text_changed(string);
+  callback product_selected(ProductData);
+
+  VerticalLayout {
+    spacing: 24px;
+
+    Rectangle {
+      width: search_bar.preferred-width;
+      height: search_bar.preferred-height;
+      search_bar := SearchBar {
+        color: Colors.m_gray;
+        default_text: "Search product name";
+        des_data: des_data;
+
+        search_text_changed(new_text) => {
+          root.search_text_changed(new_text);
+        }
+      }
+    }
+
+    if product_selection_input.best_results.length != 0 || product_selection_input.recent_results.length != 0 : Rectangle {
+      width: col_width * 6 + des_data.gutter * 5;
+      background: Colors.vl_gray;
+      border-radius: 10px;
+
+      // for height calculations
+      VerticalLayout {
+        ProductDetails {
+          input: product_selection_input.best_results;
+          product_selected(pr) => {
+            root.product_selected(pr);
+          }
+        }
+
+        if product_selection_input.recent_results.length != 0 : VerticalLayout {
+          HorizontalLayout {
+            alignment: LayoutAlignment.start;
+            padding-left: 24px;
+            padding-right: 24px;
+            padding-top: 8px;
+            padding-bottom: 8px;
+            Text {
+              in_text: "Recents";
+              in_color: Colors.m_gray;
+              style: TextStyle.H6;
+            }
+          }
+
+          ProductDetails {
+            input: product_selection_input.recent_results;
+            product_selected(pr) => {
+              root.product_selected(pr);
+            }
+          }
+        }
+      }
+    }
   }
 }

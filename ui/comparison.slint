@@ -1,8 +1,8 @@
 import { Text, TextStyle } from "text.slint";
 import { Colors } from "colors.slint";
 import { DesignData } from "design_data.slint";
-import { SearchBar } from "utils.slint";
-import { DealerData, ProductData, DealerPricePair, ProductDealersConnection, ComparisonProductSelectionInput, ComparisonTableInput, Mode } from "data_structures.slint";
+import { SearchBar, ProductSearch } from "utils.slint";
+import { DealerData, ProductData, DealerPricePair, ProductDealersConnection, ProductSelectionInput, ComparisonTableInput, Mode } from "data_structures.slint";
 
 component DealerRow {
   in property<DealerPricePair> dealer_price_pair;
@@ -60,62 +60,6 @@ component DealerRow {
   }
 }
 
-component ProductDetails {
-  callback product_selected(ProductData);
-
-  in property<[ProductData]> input;
-  VerticalLayout {
-    for pr[i] in input : Rectangle {
-      TouchArea {
-        clicked => {
-          product_selected(pr);
-        }
-      }
-      VerticalLayout {
-        alignment: LayoutAlignment.start;
-        padding-left: 24px;
-        padding-right: 24px;
-
-        HorizontalLayout {
-          alignment: LayoutAlignment.space_between;
-          padding-top: 16px;
-          padding-bottom: 16px;
-          HorizontalLayout {
-            spacing: 24px;
-            Rectangle {
-              width: 48px;
-              height: self.width;
-              border-radius: self.width / 2;
-              clip: true;
-              background: Colors.m_gray;
-
-              Image {
-                  source: pr.image;
-              }
-            }
-
-            Text {
-              in_text: pr.brand_name + " " + pr.product_name;
-              in_color: Colors.d_gray;
-              style: TextStyle.H4;
-            }
-          }
-
-          Text {
-            in_text: pr.pack_name;
-            in_color: Colors.d_gray;
-            style: TextStyle.H5;
-          }
-        }
-
-        if i != input.length - 1 : Rectangle {
-          height: 2px;
-          background: Colors.m_gray;
-        }
-      }
-    }
-  }
-}
 
 component ComparisonTable {
   in property<DesignData> des_data;
@@ -163,80 +107,6 @@ component ComparisonTable {
   }
 }
 
-component ProductSearch {
-  in property<DesignData> des_data;
-  property<length> win_width: 16px * des_data.win_scale;
-  property<length> win_height: 9px * des_data.win_scale;
-  property<length> col_width: (win_width - (2 * des_data.padding) - (11 * des_data.gutter)) / des_data.columns;
-
-  in property<ComparisonProductSelectionInput> product_selection_input;
-
-  in property<bool> remove_focus_toggle;
-
-  changed remove_focus_toggle => {
-    search_bar.remove_focus();
-  }
-
-  callback search_text_changed(string);
-  callback product_selected(ProductData);
-
-  VerticalLayout {
-    spacing: 24px;
-
-    Rectangle {
-      width: search_bar.preferred-width;
-      height: search_bar.preferred-height;
-      search_bar := SearchBar {
-        color: Colors.m_gray;
-        default_text: "Search product name";
-        des_data: des_data;
-
-        search_text_changed(new_text) => {
-          root.search_text_changed(new_text);
-        }
-      }
-    }
-
-    if product_selection_input.best_results.length != 0 || product_selection_input.recent_results.length != 0 : Rectangle {
-      width: col_width * 6 + des_data.gutter * 5;
-      background: Colors.vl_gray;
-      border-radius: 10px;
-
-      // for height calculations
-      VerticalLayout {
-        ProductDetails {
-          input: product_selection_input.best_results;
-          product_selected(pr) => {
-            root.product_selected(pr);
-          }
-        }
-
-        if product_selection_input.recent_results.length != 0 : VerticalLayout {
-          HorizontalLayout {
-            alignment: LayoutAlignment.start;
-            padding-left: 24px;
-            padding-right: 24px;
-            padding-top: 8px;
-            padding-bottom: 8px;
-            Text {
-              in_text: "Recents";
-              in_color: Colors.m_gray;
-              style: TextStyle.H6;
-            }
-          }
-
-          ProductDetails {
-            input: product_selection_input.recent_results;
-            product_selected(pr) => {
-              root.product_selected(pr);
-            }
-          }
-        }
-      }
-    }
-  }
-}
-
 export component ComparisonLayout {
   in property<DesignData> des_data;
 
@@ -244,7 +114,7 @@ export component ComparisonLayout {
   property<length> win_height: 9px * des_data.win_scale;
   property<length> col_width: (win_width - (2 * des_data.padding) - (11 * des_data.gutter)) / des_data.columns;
 
-  in property<ComparisonProductSelectionInput> product_selection_input;
+  in property<ProductSelectionInput> product_selection_input;
   in property<ComparisonTableInput> table_input;
   in property<Mode> mode;
 
@@ -256,7 +126,6 @@ export component ComparisonLayout {
   VerticalLayout {
     Rectangle {
       height: win_height - (0.6px * des_data.win_scale);
-      width: win_width - (col_width * 2 + des_data.gutter + des_data.padding);
 
       TouchArea {
         clicked => {

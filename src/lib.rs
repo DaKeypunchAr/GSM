@@ -5,13 +5,16 @@ use std::path::Path;
 
 // TODO: Use the database to the full capacity!
 
+#[derive(Debug)]
 pub struct Dealer {
     pub first_name: String,
     pub middle_name: Option<String>,
     pub last_name: String,
+    pub country_code: String,
     pub phone_num: String,
 }
 
+#[derive(Debug)]
 pub struct Product {
     pub brand_name: String,
     pub product_name: String,
@@ -124,7 +127,7 @@ impl Store {
         self.connection
             .prepare(
                 "
-                    SELECT d.first_name, d.middle_name, d.last_name, (p.country_code || ' ' || p.phone_number) AS phone_number
+                    SELECT d.first_name, d.middle_name, d.last_name, p.country_code, p.phone_number
                     FROM dealer d
                     LEFT JOIN dealer_contact dc ON d.dealer_id = dc.dealer_id
                     LEFT JOIN phone p ON dc.phone_id = p.phone_id
@@ -134,11 +137,13 @@ impl Store {
                 let first_name = row.get(0)?;
                 let middle_name = row.get(1)?;
                 let last_name = row.get(2)?;
-                let phone_num = row.get(3)?;
+                let country_code = row.get(3)?;
+                let phone_num = row.get(4)?;
                 Ok(Dealer {
                     first_name,
                     middle_name,
                     last_name,
+                    country_code,
                     phone_num,
                 })
             })?
@@ -316,7 +321,7 @@ impl Store {
         Ok(Vec::new())
     }
 
-    pub fn get_dealer_price_pairs_for(
+    pub fn get_latest_dealer_price_pairs_for(
         &self,
         product: Product,
     ) -> Result<Vec<(Dealer, u32)>, Error> {
@@ -336,27 +341,84 @@ impl Store {
             |row| row.get(0),
         )?;
 
-        self.connection.prepare("
-        SELECT d.first_name, d.middle_name, d.last_name, (p.country_code || ' ' || p.phone_number) AS phone_number, price
+        self.connection
+            .prepare(
+                "
+        SELECT d.first_name, d.middle_name, d.last_name, p.country_code, p.phone_number, price
         FROM dealer_price dp
         LEFT JOIN dealer d ON d.dealer_id = dp.dealer_id
         LEFT JOIN dealer_contact dc ON d.dealer_id = dc.dealer_id
         LEFT JOIN phone p ON dc.phone_id = p.phone_id
         WHERE product_id = ?1
-        ")?
+        AND dp.time_stamp = (
+            SELECT MAX(dp2.time_stamp)
+            FROM dealer_price dp2
+            WHERE dp2.dealer_id = dp.dealer_id
+            AND dp2.product_id = dp.product_id
+        )
+        ",
+            )?
             .query_map(params![product_id], |row| {
                 let first_name = row.get(0)?;
                 let middle_name = row.get(1)?;
                 let last_name = row.get(2)?;
-                let phone_num = row.get(3)?;
-                Ok((Dealer {
-                    first_name,
-                    middle_name,
-                    last_name,
-                    phone_num,
-                }, row.get(4)?))
+                let country_code = row.get(3)?;
+                let phone_num = row.get(4)?;
+                Ok((
+                    Dealer {
+                        first_name,
+                        middle_name,
+                        last_name,
+                        country_code,
+                        phone_num,
+                    },
+                    row.get(5)?,
+                ))
             })?
             .collect()
+    }
+
+    pub fn update_price(&self, product: Product, dealer: Dealer, price: u32) {
+        println!(
+            "Product: {:#?}\nDealer: {:#?}\nPrice: {:#?}",
+            product, dealer, price
+        );
+        let product_id: i64 = self
+            .connection
+            .query_row(
+                "
+SELECT product_id
+FROM product
+LEFT JOIN brand ON brand.brand_id = product.brand_id
+LEFT JOIN item ON item.item_id = product.item_id
+WHERE product.name = ?1 AND brand.name = ?2 AND item.name = ?3 AND product.pack_name = ?4",
+                params![
+                    product.product_name,
+                    product.brand_name,
+                    product.item_name,
+                    product.pack_name
+                ],
+                |row| row.get(0),
+            )
+            .unwrap();
+
+        let dealer_id: i64 = self
+            .connection
+            .query_row(
+            "
+SELECT dealer.dealer_id
+FROM dealer
+LEFT JOIN dealer_contact ON dealer.dealer_id = dealer_contact.dealer_id
+LEFT JOIN phone ON dealer_contact.phone_id = phone.phone_id
+WHERE dealer.first_name = ?1 AND (dealer.middle_name IS NULL OR dealer.middle_name = ?2) AND dealer.last_name = ?3 AND phone.country_code = ?4 AND phone.phone_number = ?5",
+        params![dealer.first_name, dealer.middle_name, dealer.last_name, dealer.country_code, dealer.phone_num], |row| row.get(0)).unwrap();
+
+        self.connection
+            .execute(
+                "INSERT INTO dealer_price (product_id, dealer_id, price) VALUES (?1, ?2, ?3)",
+                params![product_id, dealer_id, price],
+            )
+            .unwrap();
     }
 }
 

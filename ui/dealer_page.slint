@@ -45,7 +45,7 @@ component Result {
           HorizontalLayout {
             alignment: LayoutAlignment.start;
             Text {
-              in_text: "Mobile No: " + dealer.phone_num;
+              in_text: "Mobile No: " + dealer.country_code + " " + dealer.phone_num;
               in_color: Colors.vl_gray;
               style: TextStyle.Paragraph;
             }

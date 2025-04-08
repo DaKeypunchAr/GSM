@@ -1,0 +1,204 @@
+import { DesignData } from "design_data.slint";
+import { ProductData, DealerData, ProductSelectionInput, DataFeedInput, Mode } from "data_structures.slint";
+import { ProductSearch, InputLabel, Button } from "utils.slint";
+import { Colors } from "colors.slint";
+import { Text, TextStyle } from "text.slint";
+
+export component DataFill {
+  in property<DataFeedInput> data_feed_input;
+  in property<DesignData> des_data;
+  in property<bool> remove_focus_toggle;
+
+  changed remove_focus_toggle => {
+    label.remove_focus();
+  }
+
+  property<length> win_width: 16px * des_data.win_scale;
+  property<length> win_height: 9px * des_data.win_scale;
+  property<length> col_width: (win_width - (2 * des_data.padding) - (11 * des_data.gutter)) / des_data.columns;
+
+  callback price_changed(ProductData, DealerData, string);
+  callback skipped <=> skip.clicked;
+
+  Rectangle {
+    background: Colors.vl_gray;
+    width: 6 * col_width + 5 * des_data.gutter;
+    border_radius: 10px;
+
+    TouchArea {
+      clicked => {
+        label.remove_focus();
+      }
+    }
+
+    VerticalLayout {
+      padding: 24px;
+      spacing: 16px;
+
+      HorizontalLayout {
+        alignment: LayoutAlignment.start;
+        spacing: 16px;
+
+        Rectangle {
+          background: Colors.m_gray;
+          width: 32px;
+          height: 32px;
+          border_radius: self.width / 2;
+        }
+
+        Text {
+          in_text: data_feed_input.product_dealers_connection.product.brand_name
+                  + " " + data_feed_input.product_dealers_connection.product.product_name
+                  + " " + data_feed_input.product_dealers_connection.product.pack_name + " Pack";
+          in_color: Colors.d_gray;
+          style: TextStyle.H5;
+        }
+
+        Text {
+          in_text: "(" + data_feed_input.product_dealers_connection.product.item_name + ")";
+          in_color: Colors.m_gray;
+          style: TextStyle.Paragraph;
+        }
+      }
+
+      VerticalLayout {
+        alignment: LayoutAlignment.start;
+        spacing: 4px; 
+
+        HorizontalLayout {
+          alignment: LayoutAlignment.start;
+          spacing: 16px; 
+
+          Text {
+            in_text: data_feed_input.product_dealers_connection.dealer_price_pairs[data_feed_input.index].dealer.first_name + " " +
+                    (data_feed_input.product_dealers_connection.dealer_price_pairs[data_feed_input.index].dealer.middle_name == "" ? " " :
+                    (data_feed_input.product_dealers_connection.dealer_price_pairs[data_feed_input.index].dealer.middle_name + " ")) +
+                    data_feed_input.product_dealers_connection.dealer_price_pairs[data_feed_input.index].dealer.last_name;
+            in_color: Colors.d_gray;
+            style: TextStyle.H2;
+          }
+
+          Text {
+            in_text: "(" + data_feed_input.product_dealers_connection.dealer_price_pairs[data_feed_input.index].dealer.country_code + " " + 
+                    data_feed_input.product_dealers_connection.dealer_price_pairs[data_feed_input.index].dealer.phone_num + ")";
+            in_color: Colors.m_gray;
+            style: TextStyle.Paragraph;
+          }
+        }
+
+        HorizontalLayout { alignment: LayoutAlignment.start; Text {
+          in_text: "Last price: ₹" + data_feed_input.product_dealers_connection.dealer_price_pairs[data_feed_input.index].price + "/-";
+          in_color: Colors.d_gray;
+          style: TextStyle.H3;
+        }}
+      }
+
+      HorizontalLayout {
+        alignment: LayoutAlignment.start;
+        
+        label := InputLabel {
+          color: Colors.d_gray;
+          placeholder_text: "";
+          des_data: des_data;
+          calc_width: 300px;
+          text_style: TextStyle.Paragraph;
+          text_color: Colors.l_gray;
+
+          label_name: "New price";
+          label_color: Colors.d_gray;
+          label_style: TextStyle.H4;
+        }
+      }
+
+      HorizontalLayout {
+        alignment: LayoutAlignment.space_around;
+
+        next := Button {
+          name: "Next Dealer";
+          color: Colors.l_gray;
+          bg_color: Colors.d_gray;
+          text_style: TextStyle.Paragraph;
+
+          clicked => {
+            price_changed(data_feed_input.product_dealers_connection.product, data_feed_input.product_dealers_connection.dealer_price_pairs[data_feed_input.index].dealer, label.text);
+            label.change_text("");
+          }
+        }
+
+        skip := Button {
+          name: "Skip";
+          color: Colors.l_gray;
+          bg_color: Colors.d_gray;
+          text_style: TextStyle.Paragraph;
+        }
+      }
+    }
+  }
+}
+
+export component DataFeedLayout {
+  in property<DesignData> des_data;
+
+  property<length> win_width: 16px * des_data.win_scale;
+  property<length> win_height: 9px * des_data.win_scale;
+  property<length> col_width: (win_width - (2 * des_data.padding) - (11 * des_data.gutter)) / des_data.columns;
+
+  in property<ProductSelectionInput> product_selection_input;
+  in-out property<DataFeedInput> data_feed_input;
+  in property<Mode> mode;
+
+  // callbacks
+  callback product_selected(ProductData);
+  callback search_text_changed(string);
+  callback price_changed(ProductData, DealerData, string);
+  callback feed_completed();
+  callback increment_data_feed();
+
+  property<bool> remove_focus_toggle: false;
+  VerticalLayout {
+    alignment: LayoutAlignment.center;
+
+    Rectangle {
+      height: win_height - (0.6px * des_data.win_scale);
+
+      TouchArea {
+        clicked => {
+          remove_focus_toggle = !remove_focus_toggle;
+        }
+      }
+
+      if mode == Mode.DataFeedSelection : ProductSearch {
+        des_data: des_data;
+        product_selection_input: product_selection_input;
+        remove_focus_toggle: remove_focus_toggle;
+
+        search_text_changed(new_text) => {
+          root.search_text_changed(new_text);
+        }
+        product_selected(pr) => {
+          root.product_selected(pr);
+        }
+      }
+      if mode == Mode.DataFeedProcedure : DataFill {
+        des_data: des_data;
+        data_feed_input: data_feed_input;
+        remove_focus_toggle: remove_focus_toggle;
+
+        price_changed(product, dealer, price) => {
+          root.price_changed(product, dealer, price);
+          root.increment_data_feed();
+          if (data_feed_input.product_dealers_connection.dealer_price_pairs.length <= data_feed_input.index) {
+            feed_completed();
+          }
+        }
+
+        skipped => {
+          root.increment_data_feed();
+          if (data_feed_input.product_dealers_connection.dealer_price_pairs.length <= data_feed_input.index) {
+            feed_completed();
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,7 +1,10 @@
 // Data Structures
 import { DesignData } from "design_data.slint";
 import { Colors } from "colors.slint";
-import { DealerData, ProductData, ProductDealersConnection, ComparisonProductSelectionInput, ComparisonTableInput, ProductSearchInput, DealerSearchInput, Mode } from "data_structures.slint";
+import { DealerData, ProductData, ProductDealersConnection, 
+         ProductSelectionInput, ComparisonTableInput,
+         ProductSearchInput, DealerSearchInput, DataFeedInput,
+         Mode } from "data_structures.slint";
 
 // Layout Abstractions
 import { Header } from "header.slint";
@@ -9,12 +12,14 @@ import { SideBar } from "sidebar.slint";
 import { ComparisonLayout } from "comparison.slint";
 import { ProductPageLayout } from "product_page.slint";
 import { DealerPageLayout } from "dealer_page.slint";
+import { DataFeedLayout } from "data_feed.slint";
 
 export struct Data {
-  comparison_product_selection_input: ComparisonProductSelectionInput,
+  product_selection_input: ProductSelectionInput,
   comparison_table_input: ComparisonTableInput,
   product_search_input: ProductSearchInput,
   dealer_search_input: DealerSearchInput,
+  data_feed_input: DataFeedInput,
 }
 
 export component MainWindow inherits Window {
@@ -35,24 +40,28 @@ export component MainWindow inherits Window {
     "Comparison Table",
     "Products",
     "Dealers",
+    "Data Feed"
   ];
   property<[Mode]> pages_initial_mode: [
     Mode.ComparisonProductSelection,
     Mode.ProductSearch,
     Mode.DealerSearch,
+    Mode.DataFeedSelection,
   ];
   in-out property<int> selected_page: 0;
   in-out property<bool> sidebar_activated: true;
 
   in-out property<Mode> mode: Mode.ComparisonProductSelection;
-  in property<Data> input_data;
+  in-out property<Data> input_data;
 
   // Callbacks
   callback mode_changed(Mode);
   callback search_text_changed(string, Mode);
   callback add_product(ProductData);
   callback add_dealer(DealerData);
-  callback product_selected(ProductData);
+  callback product_selected(ProductData, Mode);
+  callback price_changed(ProductData, DealerData, string);
+  callback increment_data_feed();
 
   VerticalLayout {
     alignment: start;
@@ -78,14 +87,14 @@ export component MainWindow inherits Window {
 
       if selected_page == 0 : ComparisonLayout {
         des_data: design_data;
-        product_selection_input: input_data.comparison_product_selection_input;
+        product_selection_input: input_data.product_selection_input;
         table_input: input_data.comparison_table_input;
         mode: mode;
 
         product_selected(pr) => {
           mode = Mode.ComparisonTable;
           mode_changed(mode);
-          product_selected(pr);
+          product_selected(pr, mode);
         }
         search_text_changed(new_text) => {
           root.search_text_changed(new_text, mode);
@@ -135,6 +144,38 @@ export component MainWindow inherits Window {
         }
         search_text_changed(new_text) => {
           root.search_text_changed(new_text, mode);
+        }
+      }
+      if selected_page == 3 : DataFeedLayout {
+        des_data: design_data;
+        product_selection_input: input_data.product_selection_input;
+        data_feed_input: input_data.data_feed_input;
+        mode: mode;
+
+        product_selected(pr) => {
+          mode = Mode.DataFeedProcedure;
+          mode_changed(mode);
+          product_selected(pr, mode);
+          if input_data.data_feed_input.product_dealers_connection.dealer_price_pairs.length == 0 {
+            mode = Mode.DataFeedSelection;
+            mode_changed(mode);
+          }
+        }
+        search_text_changed(new_text) => {
+          root.search_text_changed(new_text, mode);
+        }
+
+        price_changed(product, dealer, price) => {
+          root.price_changed(product, dealer, price);
+        }
+
+        feed_completed => {
+          mode = Mode.DataFeedSelection;
+          mode_changed(mode);
+        }
+
+        increment_data_feed => {
+          root.increment_data_feed();
         }
       }
     }
