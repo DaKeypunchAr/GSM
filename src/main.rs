@@ -226,8 +226,6 @@ fn main() {
                     })
                     .unwrap();
 
-                println!("Dealers connection: {:#?}", &price_pairs);
-
                 let price_pairs: Vec<_> = price_pairs
                     .into_iter()
                     .map(|price_pair| slint_generatedMainWindow::DealerPricePair {
@@ -278,35 +276,6 @@ fn main() {
                 let input_data = app.get_input_data();
                 let data_feed_input = input_data.data_feed_input;
 
-                let price_pairs: Vec<(Dealer, i32)> = (0..data_feed_input
-                    .product_dealers_connection
-                    .dealer_price_pairs
-                    .row_count())
-                    .filter_map(|i| {
-                        data_feed_input
-                            .product_dealers_connection
-                            .dealer_price_pairs
-                            .row_data(i)
-                    })
-                    .map(|pair| {
-                        (
-                            Dealer {
-                                first_name: pair.dealer.first_name.to_string(),
-                                last_name: pair.dealer.last_name.to_string(),
-                                country_code: pair.dealer.country_code.to_string(),
-                                phone_num: pair.dealer.phone_num.to_string(),
-                                middle_name: if pair.dealer.middle_name.is_empty() {
-                                    None
-                                } else {
-                                    Some(pair.dealer.middle_name.to_string())
-                                },
-                            },
-                            pair.price,
-                        )
-                    })
-                    .collect();
-                println!("Data feed input: {:#?}\nIndex: {:#?}", price_pairs, data_feed_input.index);
-
                 app.set_input_data(slint_generatedMainWindow::Data {
                     data_feed_input: slint_generatedMainWindow::DataFeedInput {
                         product_dealers_connection: data_feed_input.product_dealers_connection,
@@ -318,34 +287,6 @@ fn main() {
 
             let input_data = app.get_input_data();
             let data_feed_input = input_data.data_feed_input;
-            let price_pairs: Vec<(Dealer, i32)> = (0..data_feed_input
-                .product_dealers_connection
-                .dealer_price_pairs
-                .row_count())
-                .filter_map(|i| {
-                    data_feed_input
-                        .product_dealers_connection
-                        .dealer_price_pairs
-                        .row_data(i)
-                })
-                .map(|pair| {
-                    (
-                        Dealer {
-                            first_name: pair.dealer.first_name.to_string(),
-                            last_name: pair.dealer.last_name.to_string(),
-                            country_code: pair.dealer.country_code.to_string(),
-                            phone_num: pair.dealer.phone_num.to_string(),
-                            middle_name: if pair.dealer.middle_name.is_empty() {
-                                None
-                            } else {
-                                Some(pair.dealer.middle_name.to_string())
-                            },
-                        },
-                        pair.price,
-                    )
-                })
-                .collect();
-            println!("Data feed input (after increment): {:#?}\nIndex: {:#?}", price_pairs, data_feed_input.index);
         });
     }
 
